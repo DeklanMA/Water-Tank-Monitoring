@@ -43,6 +43,7 @@ use App\Http\Controllers\form_elements\InputGroups;
 use App\Http\Controllers\form_layouts\VerticalForm;
 use App\Http\Controllers\form_layouts\HorizontalForm;
 use App\Http\Controllers\tables\Basic as TablesBasic;
+use App\Http\Controllers\WaterTankController;
 
 // Main Page Route
 Route::get('/', [Analytics::class, 'index'])->name('dashboard-analytics');
@@ -107,3 +108,12 @@ Route::get('/form/layouts-horizontal', [HorizontalForm::class, 'index'])->name('
 
 // tables
 Route::get('/tables/basic', [TablesBasic::class, 'index'])->name('tables-basic');
+
+
+
+
+//api
+Route::get('/api/kedalaman', [WaterTankController::class, 'statuskedalaman']);
+Route::get('/api/suhu', [WaterTankController::class, 'suhu']);
+Route::get('/api/getStatuspompa', [WaterTankController::class, 'getStatuspompa']);
+Route::get('/api/watertank/{watertankId}', [WaterTankController::class, 'calculateVolumeFromDepth']);
