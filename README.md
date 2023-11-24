@@ -12,7 +12,7 @@ This project is an Internet of Things (IoT) based water tank monitoring system d
 ## Technology Stack
 - **Laravel Framework**
 - **Hardware:**
-  - Microcontroller (e.g., Arduino, ESP8266, Raspberry Pi).
+  - Microcontroller (e.g., Arduino, ESP8266).
   - Water level sensor (Ultrasonic, Capacitive, etc.).
   - Communication module (WiFi, GSM, Bluetooth, etc.).
 
