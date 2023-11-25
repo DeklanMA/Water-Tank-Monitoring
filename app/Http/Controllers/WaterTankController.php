@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\MmqttKedalaman;
 use Illuminate\Http\Request;
 use App\Models\Mpompa;
 use App\Models\Watertank;
@@ -10,6 +11,16 @@ use Illuminate\Support\Facades\Schema;
 
 class WaterTankController extends Controller
 {
+
+
+    public function viewResults()
+    {
+        // Retrieve data from the database (you can adjust this based on your actual data structure)
+        $results = Watertank::all();
+
+        // Return the results as JSON
+        return response()->json($results);
+    }
     public function statuskedalaman()
     {
         $latestWaterTank = Watertank::latest()->first();

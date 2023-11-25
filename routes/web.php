@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\MqttController;
+use App\Http\Controllers\WaterTankController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -51,3 +53,15 @@ Route::group(['middleware' => 'auth'], function () {
 });
 
 
+
+//mqtt
+Route::get('/publish', [MqttController::class, 'publishMessage']);
+Route::get('/subribe', [MqttController::class, 'subscribeToTopic']);
+Route::get('/view-results', [WaterTankController::class, 'viewResults']);
+
+
+//api
+Route::get('/api/kedalaman', [WaterTankController   ::class, 'statuskedalaman']);
+Route::get('/api/suhu', [WaterTankController::class, 'suhu']);
+Route::get('/api/getStatuspompa', [WaterTankController::class, 'getStatuspompa']);
+Route::get('/api/watertank/{watertankId}', [WaterTankController::class, 'calculateVolumeFromDepth']);
