@@ -12,16 +12,17 @@ This project is an Internet of Things (IoT) based water tank monitoring system d
 ## Technology Stack
 - **Laravel Framework**
 - **Hardware:**
-  - Microcontroller (e.g., Arduino, ESP8266).
-  - Water level sensor (Ultrasonic, Capacitive, etc.).
+  - Microcontroller (ESP8266).
+  - Water level sensor (Ultrasonic, Capacitive, waterfall).
   - Communication module (WiFi, GSM, Bluetooth, etc.).
 
 - **Software:**
   - Programming Languages: PHP, JavaScript.
   - Web Framework: Laravel.
-  - Database for storing data (e.g., MySQL).
-  - Frontend Framework (e.g., Bootstrap, Vue.js).
-  - Charting Library (e.g., Chart.js).
+  - Database for storing data (MySQL).
+  - Frontend Framework (Bootstrap, Vue.js).
+  - Back end Framework (Flask,python)
+  - Charting Library (Chart.js).
 
 ## Getting Started
 1. Clone this repository to your local machine.
