@@ -19,10 +19,10 @@ This project is an Internet of Things (IoT) based water tank monitoring system d
 - **Software:**
   - Programming Languages: PHP, JavaScript.
   - Web Framework: Laravel.
-  - Database for storing data (e.g., MySQL).
-  - Frontend Framework (e.g., Bootstrap, Vue.js).
-  - Back end Frameworl(Flask,python)
-  - Charting Library (e.g., Chart.js).
+  - Database for storing data (MySQL).
+  - Frontend Framework (Bootstrap, Vue.js).
+  - Back end Framework (Flask,python)
+  - Charting Library (Chart.js).
 
 ## Getting Started
 1. Clone this repository to your local machine.
