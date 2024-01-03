@@ -1,4 +1,131 @@
 @extends('layouts.app', ['pageSlug' => 'dashboard'])
+<!-- Pastikan jQuery dimuat sebelum script Anda -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+
+
+
+<!-- Script AJAX -->
+<script>
+    function updateSuhu() {
+        $.ajax({
+            url: 'http://192.168.1.6:3000/read_latest_data/ione/suhu',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data && data['ione/suhu'] !== undefined) {
+                    // Parse the value as float and format it with two decimal places
+                    var suhuValue = parseFloat(data['ione/suhu']).toFixed(2);
+                    $('#suhu').html(
+                        '<img src="{{ asset('black') }}/img/suhu.jpg" width="30" height="30" alt="Deskripsi Gambar"></img> ' +
+                        suhuValue +
+                        ' °C');
+                } else {
+                    console.error('Format data tidak sesuai atau nilai suhu tidak tersedia.');
+                }
+            },
+            error: function() {
+                console.error('Gagal melakukan AJAX request');
+            }
+        });
+    }
+
+    function updatevolumeair() {
+        $.ajax({
+            url: 'http://192.168.1.6:3000/read_latest_data/ione/volumeAir',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data && data['ione/volumeAir'] !== undefined) {
+                    // Parse the value as float and format it with two decimal places
+                    var volumeValue = parseFloat(data['ione/volumeAir']).toFixed(2);
+
+                    // Corrected line: Concatenate HTML string with volumeValue
+                    $('#volumeair').html('<i class="tim-icons icon-send text-success"></i> ' + volumeValue +
+                        ' Liter');
+                } else {
+                    console.error('Format data tidak sesuai atau nilai suhu tidak tersedia.');
+                }
+            },
+            error: function() {
+                console.error('Gagal melakukan AJAX request');
+            }
+        });
+    }
+
+
+    var pumpStartTime = null; // Variable to store pump start time
+
+    function updatePompaStatus() {
+        $.ajax({
+            url: 'http://192.168.1.6:3000/read_latest_data/ione/statuspompa',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data && data['ione/statuspompa'] !== undefined) {
+                    var statusPompa = data['ione/statuspompa'];
+                    if (statusPompa === 1) {
+                        $('#statusPompa').text('Menyala');
+                        // Jika pompa menyala, update start time
+                        pumpStartTime = new Date().getTime();
+                        // Update duration directly on the client side
+                        updatePompaDuration();
+                    } else {
+                        $('#statusPompa').text('Mati');
+                        // Jika pompa mati, reset informasi durasi, tapi jangan reset start time
+                        resetPompaDuration();
+                    }
+                } else {
+                    console.error('Format data tidak sesuai atau status pompa tidak tersedia.');
+                }
+            },
+            error: function() {
+                console.error('Gagal melakukan AJAX request');
+            }
+        });
+    }
+
+
+    function updatePompaDuration() {
+        if (pumpStartTime) {
+            var currentTime = new Date().getTime();
+            var duration = Math.floor((currentTime - pumpStartTime) / 1000); // in seconds
+
+            var hours = Math.floor(duration / 3600);
+            var minutes = Math.floor((duration % 3600) / 60);
+            var seconds = duration % 60;
+
+            var formattedDuration = hours + ' Jam ' + minutes + ' Menit ' + seconds + ' Detik';
+            $('#pompaDuration').text(formattedDuration);
+        }
+    }
+
+    function resetPompaDuration() {
+        $('#pompaDuration').text('0 Jam 0 Menit');
+    }
+
+    // Panggil fungsi updatePompaDuration setiap detik
+    setInterval(updatePompaDuration, 1000);
+
+    setInterval(updatePompaStatus, 5000);
+
+    // Format duration in seconds to 'hh Jam mm Menit' format
+    function formatDuration(duration) {
+        var hours = Math.floor(duration / 3600);
+        var minutes = Math.floor((duration % 3600) / 60);
+        var seconds = duration % 60;
+
+        return hours + ' Jam ' + minutes + ' Menit ' + seconds + ' Detik';
+    }
+
+
+
+    // Use a named function for the setInterval callback
+    setInterval(updateSuhu, 1000);
+    setInterval(updatevolumeair, 1000);
+</script>
+
+
+
 
 @section('content')
     <div class="row">
@@ -50,7 +177,7 @@
             <div class="card card-chart">
                 <div class="card-header">
                     <h5 class="card-category">Pompa Menyala</h5>
-                    <h3 class="card-title"><i class="tim-icons icon-bell-55 text-primary"></i>7 Jam</h3>
+                    <h3 id="pompaDuration" class="card-title"><i class="tim-icons icon-bell-55 text-primary"></i>7 Jam</h3>
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
@@ -63,9 +190,9 @@
             <div class="card card-chart">
                 <div class="card-header">
                     <h5 class="card-category">SUHU</h5>
-                    <h3 class="card-title"> <img src="{{ asset('black') }}/img/suhu.jpg" width="30" height="30"
-                            alt="Deskripsi Gambar">
-                        30,00 °C</h3>
+                    <h3 id="suhu" class="card-title"> <img src="{{ asset('black') }}/img/suhu.jpg" width="30"
+                            height="30" alt="Deskripsi Gambar">
+                        30.00 °C</h3>
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
@@ -78,7 +205,7 @@
             <div class="card card-chart">
                 <div class="card-header">
                     <h5 class="card-category">Volume Air</h5>
-                    <h3 class="card-title"><i class="tim-icons icon-send text-success"></i> 12000,100 Liter</h3>
+                    <h3 id="volumeair" class="card-title"><i class="tim-icons icon-send text-success"></i> 100.00 liter</h3>
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
@@ -115,7 +242,7 @@
                                     <td>
                                         Pompa 1
                                     </td>
-                                    <td>
+                                    <td id="statusPompa">
                                         <img src="{{ asset('black') }}/img/check_circle.png"> On
                                     </td>
                                     <td>
@@ -148,6 +275,19 @@
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card card-chart">
+                <div class="card-header">
+                    <h5 class="card-category">Volume Air</h5>
+                    <h3 id="volumeair" class="card-title"><i class="tim-icons icon-send text-success"></i> 100.00 liter</h3>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area">
+                        <canvas id="chartLineGreen1"></canvas>
                     </div>
                 </div>
             </div>

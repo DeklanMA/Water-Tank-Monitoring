@@ -1,8 +1,11 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 import paho.mqtt.client as mqtt
 import json
+import time
 
 app = Flask(__name__)
+CORS(app)
 
 class MQTTHandler:
     def __init__(self, broker_address, broker_port, topics):
@@ -21,6 +24,8 @@ class MQTTHandler:
             self.mqtt_client.subscribe(topic)
 
     def on_message(self, client, userdata, msg):
+        global pump_start_time  # Declare pump_start_time as global
+
         payload = msg.payload.decode('utf-8')
         topic = msg.topic
 
@@ -33,15 +38,23 @@ class MQTTHandler:
                 print(f"Parsed JSON data: {data}")
 
                 self.latest_data[topic] = data
+
+
         except json.JSONDecodeError as e:
             print(f"Error decoding JSON: {e}")
 
         print(f"Latest data: {self.latest_data}")
+
+@app.route('/read_all_latest_data')
+def read_all_latest_data():
+    all_data = {topic: mqtt_handler.latest_data[topic] for topic in mqtt_topics}
+    return jsonify(all_data)
+
         
 
 mqtt_broker_address = "broker.hivemq.com"
 mqtt_port = 1883
-mqtt_topics = ["debit", "penggunaanLiter", "jarak", "kapasitas", "waterlevel", "suhu", "statuspompa"]
+mqtt_topics = ["ione/debit", "ione/penggunaanLiter", "ione/jarak", "ione/kapasitas", "ione/waterlevel", "ione/suhu", "ione/statuspompa", "ione/volumeAir"]
 
 # Create an instance of MQTTHandler
 mqtt_handler = MQTTHandler(mqtt_broker_address, mqtt_port, mqtt_topics)
