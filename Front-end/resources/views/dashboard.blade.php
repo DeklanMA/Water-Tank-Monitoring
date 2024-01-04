@@ -1,6 +1,7 @@
 @extends('layouts.app', ['pageSlug' => 'dashboard'])
 <!-- Pastikan jQuery dimuat sebelum script Anda -->
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 
@@ -8,7 +9,7 @@
 <script>
     function updateSuhu() {
         $.ajax({
-            url: 'http://192.168.1.6:3000/read_latest_data/ione/suhu',
+            url: 'http://localhost:3000/read_latest_data/ione/suhu',
             method: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -31,7 +32,7 @@
 
     function updatevolumeair() {
         $.ajax({
-            url: 'http://192.168.1.6:3000/read_latest_data/ione/volumeAir',
+            url: 'http://localhost:3000/read_latest_data/ione/volumeAir',
             method: 'GET',
             dataType: 'json',
             success: function(data) {
@@ -55,58 +56,121 @@
 
     var pumpStartTime = null; // Variable to store pump start time
 
+    var updatingPompaStatus = false;
+
     function updatePompaStatus() {
+        if (updatingPompaStatus) {
+            console.log('Pembaruan sedang berlangsung, lewati.');
+            return;
+        }
+
+        updatingPompaStatus = true;
+
+        console.log('Mengirim AJAX request...');
         $.ajax({
-            url: 'http://192.168.1.6:3000/read_latest_data/ione/statuspompa',
+            url: 'http://localhost:3000/read_latest_data/ione/statuspompa',
             method: 'GET',
             dataType: 'json',
+            cache: false,
+            timeout: 10000,
             success: function(data) {
+                console.log('Berhasil menerima respons dari server.');
                 if (data && data['ione/statuspompa'] !== undefined) {
                     var statusPompa = data['ione/statuspompa'];
+                    var currentTime = data.currentTime; // Pastikan currentTime ada di respons server
+                    console.log('currentTime:', currentTime);
+
                     if (statusPompa === 1) {
-                        $('#statusPompa').text('Menyala');
-                        // Jika pompa menyala, update start time
                         pumpStartTime = new Date().getTime();
-                        // Update duration directly on the client side
-                        updatePompaDuration();
+                        updatePompaDate();
+                        updatePompaDuration(currentTime); // Pass currentTime to the function
+                        $('#statusPompa').html('<img src="{{ asset('black') }}/img/check_circle.png"> ' +
+                            ' ON');
                     } else {
-                        $('#statusPompa').text('Mati');
-                        // Jika pompa mati, reset informasi durasi, tapi jangan reset start time
                         resetPompaDuration();
+                        $('#statusPompa').html('<img src="{{ asset('black') }}/img/cancel.png"> ' +
+                            ' OFF');
                     }
                 } else {
+                    resetPompaDuration();
                     console.error('Format data tidak sesuai atau status pompa tidak tersedia.');
                 }
             },
-            error: function() {
-                console.error('Gagal melakukan AJAX request');
+            error: function(xhr, status, error) {
+                resetPompaDuration();
+                console.error('Gagal melakukan AJAX request:', status, error);
+            },
+            complete: function() {
+                updatingPompaStatus = false;
             }
         });
     }
 
 
+
+
+
+    var updateStatusInterval = 30000; // Ubah interval menjadi 30 detik (30,000 milidetik)
+    function initiatePompaStatusUpdate() {
+        updatePompaStatus();
+        setTimeout(initiatePompaStatusUpdate, updateStatusInterval);
+    }
+    initiatePompaStatusUpdate();
+
+
+
+
+
+
+    // Tambahkan fungsi untuk menampilkan tanggal
+    function updatePompaDate() {
+        var currentDate = new Date();
+
+        // Buat array nama bulan untuk digunakan dalam format
+        var monthNames = [
+            "Januari", "Februari", "Maret",
+            "April", "Mei", "Juni", "Juli",
+            "Agustus", "September", "Oktober",
+            "November", "Desember"
+        ];
+
+        var day = currentDate.getDate();
+        var monthIndex = currentDate.getMonth();
+        var year = currentDate.getFullYear();
+
+        var formattedDate = day + ' ' + monthNames[monthIndex] + ' ' + year;
+
+        $('#pompaDate').html(formattedDate);
+    }
+
+
+
+
     function updatePompaDuration() {
         if (pumpStartTime) {
             var currentTime = new Date().getTime();
+            console.log('currentTime:', currentTime);
+
             var duration = Math.floor((currentTime - pumpStartTime) / 1000); // in seconds
+            console.log('duration:', duration);
 
             var hours = Math.floor(duration / 3600);
             var minutes = Math.floor((duration % 3600) / 60);
             var seconds = duration % 60;
 
             var formattedDuration = hours + ' Jam ' + minutes + ' Menit ' + seconds + ' Detik';
-            $('#pompaDuration').text(formattedDuration);
+            $('#pompaDuration').html('<i class="tim-icons icon-bell-55 text-primary"></i>' + formattedDuration);
         }
     }
 
+
     function resetPompaDuration() {
-        $('#pompaDuration').text('0 Jam 0 Menit');
+        $('#pompaDuration').html('<i class="tim-icons icon-bell-55 text-primary"></i> ' + '0 Jam 0 Menit');
     }
 
     // Panggil fungsi updatePompaDuration setiap detik
     setInterval(updatePompaDuration, 1000);
 
-    setInterval(updatePompaStatus, 5000);
 
     // Format duration in seconds to 'hh Jam mm Menit' format
     function formatDuration(duration) {
@@ -245,7 +309,7 @@
                                     <td id="statusPompa">
                                         <img src="{{ asset('black') }}/img/check_circle.png"> On
                                     </td>
-                                    <td>
+                                    <td id ="pompaDate">
                                         03 April 2012
                                     </td>
                                 </tr>
@@ -279,22 +343,90 @@
                 </div>
             </div>
         </div>
-        <div class="col-lg-4">
+        <div class="col-lg-6">
             <div class="card card-chart">
                 <div class="card-header">
-                    <h5 class="card-category">Volume Air</h5>
-                    <h3 id="volumeair" class="card-title"><i class="tim-icons icon-send text-success"></i> 100.00 liter</h3>
+                    <h5 class="card-category">Rata-Rata Water Tank</h5>
+                    <h3 id="volumeair" class="card-title"> Info Rata-Rata
+                        Water Tank</h3>
                 </div>
                 <div class="card-body">
                     <div class="chart-area">
-                        <canvas id="chartLineGreen1"></canvas>
+                        <canvas id="chartLinePurple1" width="400" height="200"></canvas>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
 @endsection
+<script>
+    $(document).ready(function() {
+        var ctx1 = document.getElementById("chartLinePurple1").getContext("2d");
 
+        var gradientStroke1 = ctx1.createLinearGradient(0, 230, 0, 50);
+        gradientStroke1.addColorStop(1, "rgba(72,72,176,0.2)");
+        gradientStroke1.addColorStop(0.2, "rgba(72,72,176,0.0)");
+        gradientStroke1.addColorStop(0, "rgba(119,52,169,0)"); // purple colors
+
+        var data1 = {
+            labels: ["debit_air", "penggunaanLiter", "kapasitas", "kedalaman_air", "suhu_air",
+                "stat_pompa"
+            ],
+            datasets: [{
+                label: "Data",
+                fill: true,
+                backgroundColor: gradientStroke1,
+                borderColor: "#d048b6",
+                borderWidth: 2,
+                borderDash: [],
+                borderDashOffset: 0.0,
+                pointBackgroundColor: "#d048b6",
+                pointBorderColor: "rgba(255,255,255,0)",
+                pointHoverBackgroundColor: "#d048b6",
+                pointBorderWidth: 20,
+                pointHoverRadius: 4,
+                pointHoverBorderWidth: 15,
+                pointRadius: 4,
+                data: [],
+            }],
+        };
+
+        var myChart1 = new Chart(ctx1, {
+            type: 'line',
+            data: data1,
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                responsive: true, // Add this line to make the chart responsive
+                maintainAspectRatio: false // Add this line to allow the aspect ratio to be adjusted
+            }
+        });
+
+        function updateChart1() {
+            // Make an AJAX request to your Flask API endpoint to get all average data
+            fetch('http://localhost:3000/average_all')
+                .then(response => response.json())
+                .then(data => {
+                    // Update the chart data with the received data
+                    myChart1.data.labels = Object.keys(data);
+                    myChart1.data.datasets[0].data = Object.values(data);
+                    myChart1.update(); // Update the chart to reflect the changes
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
+
+        // Initial update when the page loads
+        updateChart1();
+
+        // Update the chart every 60 seconds
+        setInterval(updateChart1, 600000);
+
+    });
+</script>
 @push('js')
     <script src="{{ asset('black') }}/js/plugins/chartjs.min.js"></script>
     <script>
